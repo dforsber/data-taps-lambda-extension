@@ -17,8 +17,8 @@ const envSchema = z.object({
   MAX_BYTES: envNumber.default('262144'), // Maximum size in bytes that the logs are buffered in memory.
   TIMEOUT_MS: envNumber.default('1000'), // Maximum time (in milliseconds) that a batch is buffered.
   RECEIVER_PORT: envNumber.default('4243'), // HTTP server receiving port
-  LOGTAIL_HTTP_API_URL: z.string().url().default('https://in.logtail.com/'), // Logtail HTTP API ingestion URL
-  LOGTAIL_TOKEN: z.string(), // Logtail token, obtain yours via the sources UI
+  BD_HTTP_API_URL: z.string().url().default('https://in.logtail.com/'), // Logtail HTTP API ingestion URL
+  BD_TOKEN: z.string(), // Logtail token, obtain yours via the sources UI
 });
 
 export type EnvironmentVars = z.infer<typeof envSchema>;

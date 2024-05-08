@@ -1,7 +1,7 @@
 import fetchMock from 'jest-fetch-mock';
 import { Request } from 'node-fetch';
 import { either as E } from 'fp-ts';
-import { logtailLogForwarder, parseMessageWithPowertoolsLogFormat } from '~/forwarders/logtail';
+import { dataTapsLogForwarder, parseMessageWithPowertoolsLogFormat } from './data-taps';
 import { FunctionLogEvent } from '~/aws/events';
 
 describe('test logtail log forwarding', () => {
@@ -27,7 +27,7 @@ describe('test logtail log forwarding', () => {
       logsQueue: [log, log, log],
     };
 
-    const result = await logtailLogForwarder(token, ingestionUrl, listener)();
+    const result = await dataTapsLogForwarder(token, ingestionUrl, listener)();
 
     expect(E.left(result)).toBeTruthy();
 
@@ -53,7 +53,7 @@ describe('test logtail log forwarding', () => {
       logsQueue: [log, log, log],
     };
 
-    const result = await logtailLogForwarder(token, ingestionUrl, listener)();
+    const result = await dataTapsLogForwarder(token, ingestionUrl, listener)();
 
     expect(E.left(result)).toBeTruthy();
 

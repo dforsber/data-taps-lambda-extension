@@ -35,7 +35,7 @@ export const parseMessageWithPowertoolsLogFormat = (message: string): E.Either<E
     }),
   );
 
-export const logtailLogForwarder =
+export const dataTapsLogForwarder =
   (token: string, ingestionUrl: string, listener: { logsQueue: FunctionLogEvent[] }) => (): Promise<void> => {
     const logs = listener.logsQueue.splice(0);
 
@@ -65,11 +65,11 @@ export const logtailLogForwarder =
               ),
             ),
           ),
-        ),
+        ).join('\n'),
       ),
       headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/x-ndjson',
+        'x-bd-authorization': token,
       },
     })
       .then(async (response) => {

@@ -11,14 +11,14 @@ const envSchema = z.object({
   AWS_LAMBDA_RUNTIME_API: z.string(), // Provided by the Lambda Env, usually http://127.0.0.1:9001/
   AWS_LAMBDA_RUNTIME_EXTENSION_API_VERSION: z.string().default('2020-01-01'), // Extension API version
   AWS_LAMBDA_RUNTIME_TELEMETRY_API_VERSION: z.string().default('2022-07-01'), // Telemetry API version
-  EXTENSION_NAME: z.string().default('logtail-lambda-extension'),
+  EXTENSION_NAME: z.string().default('data-taps-lambda-extension'),
   RECEIVER_ADDRESS: z.string().default('sandbox'), // `sandbox` seems to be the default accepted address
   MAX_ITEMS: envNumber.default('10000'), // Maximum number of events that are buffered in memory.
   MAX_BYTES: envNumber.default('262144'), // Maximum size in bytes that the logs are buffered in memory.
   TIMEOUT_MS: envNumber.default('1000'), // Maximum time (in milliseconds) that a batch is buffered.
   RECEIVER_PORT: envNumber.default('4243'), // HTTP server receiving port
-  BD_HTTP_API_URL: z.string().url().default('https://in.logtail.com/'), // Logtail HTTP API ingestion URL
-  BD_TOKEN: z.string(), // Logtail token, obtain yours via the sources UI
+  BD_HTTP_API_URL: z.string().url().default('https://lambda-function-url/'), // Data Tap URL
+  BD_TOKEN: z.string(), // Data Tap client token, obtain yours via the BoilingData bdcli command line tool
 });
 
 export type EnvironmentVars = z.infer<typeof envSchema>;

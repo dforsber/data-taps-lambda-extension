@@ -3,7 +3,7 @@ import { EnvironmentVars } from '~/env';
 import { pollForNextEvent, registerExtension } from '~/aws/api';
 import { startTelemetryHttpListener } from '~/httpListener';
 import { subscribeTelemetry, SubscriptionBody } from '~/aws/subscribe';
-import { logtailLogForwarder } from '~/forwarders/logtail';
+import { dataTapsLogForwarder } from '~/forwarders/data-taps';
 import { AbortHandler } from '~/abortHandler';
 
 // noinspection HttpUrlsUsage
@@ -53,7 +53,7 @@ export const createExtension = (
         ),
     ),
     TE.bind('forwardLogs', ({ BD_TOKEN, BD_HTTP_API_URL, listener }) =>
-      TE.of(logtailLogForwarder(BD_TOKEN, BD_HTTP_API_URL, listener)),
+      TE.of(dataTapsLogForwarder(BD_TOKEN, BD_HTTP_API_URL, listener)),
     ),
     TE.map(({ EXTENSION_NAME, extensionId, extensionBaseUrl, forwardLogs, listener }) =>
       F.pipe(

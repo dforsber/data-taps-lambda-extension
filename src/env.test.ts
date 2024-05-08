@@ -6,7 +6,7 @@ describe('test parseEnvironment`', () => {
   test('should succeed and populate defaults', () => {
     const env = {
       AWS_LAMBDA_RUNTIME_API: 'http://127.0.0.1:9001/',
-      BD_TOKEN: 'test_token',
+      BD_TAP_CLIENT_TOKEN: 'test_token',
     };
 
     const result = parseEnvironmentVariables(env);
@@ -18,8 +18,8 @@ describe('test parseEnvironment`', () => {
         AWS_LAMBDA_RUNTIME_EXTENSION_API_VERSION: '2020-01-01',
         AWS_LAMBDA_RUNTIME_TELEMETRY_API_VERSION: '2022-07-01',
         EXTENSION_NAME: 'data-taps-lambda-extension',
-        BD_HTTP_API_URL: 'https://lambda-function-url/',
-        BD_TOKEN: 'test_token',
+        BD_DATA_TAP_URL: 'https://lambda-function-url/',
+        BD_TAP_CLIENT_TOKEN: 'test_token',
         MAX_BYTES: 262144,
         MAX_ITEMS: 10000,
         NODE_ENV: 'production',

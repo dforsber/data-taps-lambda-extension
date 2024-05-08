@@ -17,8 +17,8 @@ const envSchema = z.object({
   MAX_BYTES: envNumber.default('262144'), // Maximum size in bytes that the logs are buffered in memory.
   TIMEOUT_MS: envNumber.default('1000'), // Maximum time (in milliseconds) that a batch is buffered.
   RECEIVER_PORT: envNumber.default('4243'), // HTTP server receiving port
-  BD_HTTP_API_URL: z.string().url().default('https://lambda-function-url/'), // Data Tap URL
-  BD_TOKEN: z.string(), // Data Tap client token, obtain yours via the BoilingData bdcli command line tool
+  BD_DATA_TAP_URL: z.string().url().default('https://lambda-function-url/'), // Data Tap URL
+  BD_TAP_CLIENT_TOKEN: z.string(), // Data Tap client token, obtain yours via the BoilingData bdcli command line tool
 });
 
 export type EnvironmentVars = z.infer<typeof envSchema>;

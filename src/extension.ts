@@ -52,8 +52,8 @@ export const createExtension = (
           (body) => subscribeTelemetry(telemetryBaseUrl, extensionId, body),
         ),
     ),
-    TE.bind('forwardLogs', ({ BD_TOKEN, BD_HTTP_API_URL, listener }) =>
-      TE.of(dataTapsLogForwarder(BD_TOKEN, BD_HTTP_API_URL, listener)),
+    TE.bind('forwardLogs', ({ BD_TAP_CLIENT_TOKEN, BD_DATA_TAP_URL, listener }) =>
+      TE.of(dataTapsLogForwarder(BD_TAP_CLIENT_TOKEN, BD_DATA_TAP_URL, listener)),
     ),
     TE.map(({ EXTENSION_NAME, extensionId, extensionBaseUrl, forwardLogs, listener }) =>
       F.pipe(

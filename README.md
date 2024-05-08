@@ -20,14 +20,14 @@ $ aws lambda publish-layer-version \
       --compatible-architectures x86_64 arm64
 ```
 
-Once deployed set the `BD_TOKEN` environment variable on your Lambda to your [Data Tap client token](https://github.com/boilingdata/boilingdata-bdcli), and [add the layer](https://docs.aws.amazon.com/lambda/latest/dg/invocation-layers.html) to your Lambda function. On next invocation your Lambda logs should start flowing to your configured Data Tap. There is buffering on both in the Lambda Extension and in the Data Tap.
+Once deployed set the `BD_TAP_CLIENT_TOKEN` environment variable on your Lambda to your [Data Tap client token](https://github.com/boilingdata/boilingdata-bdcli), and [add the layer](https://docs.aws.amazon.com/lambda/latest/dg/invocation-layers.html) to your Lambda function. On next invocation your Lambda logs should start flowing to your configured Data Tap. There is buffering on both in the Lambda Extension and in the Data Tap.
 
 ## Environment Variables
 
 | Variable                                 | Description                                             | Default                              |
 | ---------------------------------------- | ------------------------------------------------------- | ------------------------------------ |
-| BD_TOKEN                                 | Data Taps source bearer token                           | **required**                         |
-| BD_HTTP_API_URL                          | Data Taps https URL                                     | **required**                         |
+| BD_TAP_CLIENT_TOKEN                      | Data Taps client token                                  | **required**                         |
+| BD_DATA_TAP_URL                          | Data Tap URL                                            | **required**                         |
 | EXTENSION_NAME                           | Name of the lambda extension                            | `data-taps-lambda-extension`         |
 | RECEIVER_ADDRESS                         | Address of the logs http receiver                       | `sandbox`                            |
 | RECEIVER_PORT                            | Port of the logs http receiver                          | `4243`                               |

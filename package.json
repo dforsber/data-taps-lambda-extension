@@ -3,23 +3,19 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "engines": {
-    "node": ">=16.0.0",
-    "pnpm": ">=7.0.0"
-  },
   "scripts": {
-    "build": "rimraf ./dist && pnpm test && ts-node ./scripts/build.ts",
+    "build": "rimraf ./dist && yarn test && ts-node ./scripts/build.ts",
     "test": "jest",
     "format": "prettier --ignore-path=.gitignore --check .",
     "format:fix": "prettier --ignore-path=.gitignore --write .",
     "lint": "eslint --ext .ts .",
     "lint:fix": "eslint --ext .ts --fix .",
     "type-check": "tsc --noEmit",
-    "validate": "pnpm run lint && pnpm run test"
+    "validate": "yarn run lint && yarn run test"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "author": "Dan Forsberg <dforsber@gmail.com>",
+  "license": "MIT",
   "dependencies": {
     "fp-ts": "^2.13.1",
     "node-fetch": "^3.3.0",

@@ -1,4 +1,10 @@
-# BoilingData Lambda Extension
+[FluentBit](https://github.com/boilingdata/data-taps-fluentbit-example) | [Web Analytics](https://github.com/boilingdata/data-taps-webanalytics-example) | [PostgreSQL CDC](https://github.com/boilingdata/data-taps-postgres-cdc) | [REST API](https://github.com/boilingdata/data-taps-nycopendata-example) | [OpenSearch/ES](https://github.com/boilingdata/data-taps-opensearch-to-s3) | [AWS Lambda Telemetry](https://github.com/dforsber/data-taps-lambda-extension)
+
+# BoilingData AWS Lambda Telemetry API
+
+<p align="center">
+  <img src="img/data-taps-lambda-extension.png" title="simple architecture">
+</p>
 
 [AWS Lambda Extension](https://docs.aws.amazon.com/lambda/latest/dg/lambda-extensions.html) that uses the [Lambda Telemetry API](https://docs.aws.amazon.com/lambda/latest/dg/telemetry-api-reference.html) to forward logs to a [Data Tap HTTPS URL](https://www.taps.boilingdata.com/).
 

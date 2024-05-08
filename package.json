@@ -1,7 +1,7 @@
 {
-  "name": "logtail-lambda-extension",
+  "name": "data-taps-lambda-extension",
   "version": "1.0.0",
-  "description": "",
+  "description": "AWS Lambda Extension using AWS Lambda Telemetry API to forward logs to Data Tap URL",
   "main": "index.js",
   "scripts": {
     "build": "rimraf ./dist && yarn test && ts-node ./scripts/build.ts",

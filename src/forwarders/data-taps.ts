@@ -3,6 +3,12 @@ import { FunctionLogEvent } from '~/aws/events';
 import { function as F, array as A, either as E } from 'fp-ts';
 import { z } from 'zod';
 
+const AWS_LAMBDA_FUNCTION_NAME = process.env['AWS_LAMBDA_FUNCTION_NAME'] ?? 'NA';
+const AWS_LAMBDA_FUNCTION_MEMORY_SIZE = process.env['AWS_LAMBDA_FUNCTION_MEMORY_SIZE'] ?? '0';
+const AWS_REGION = process.env['AWS_REGION'] ?? process.env['AWS_DEFAULT_REGION'] ?? 'NA';
+const _X_AMZN_TRACE_ID = process.env['_X_AMZN_TRACE_ID'] ?? 'NA';
+const AWS_LAMBDA_FUNCTION_VERSION = process.env['AWS_LAMBDA_FUNCTION_VERSION'] ?? 'NA';
+
 // @see https://awslabs.github.io/aws-lambda-powertools-typescript/latest/core/logger/#standard-structured-keys
 export const powertoolsLogSchema = z
   .object({
@@ -43,30 +49,38 @@ export const dataTapsLogForwarder =
       return Promise.resolve();
     }
 
+    const metadata = {
+      lambda: AWS_LAMBDA_FUNCTION_NAME,
+      lambda_version: AWS_LAMBDA_FUNCTION_VERSION,
+      region: AWS_REGION,
+      memory: AWS_LAMBDA_FUNCTION_MEMORY_SIZE,
+      x_trace_id: _X_AMZN_TRACE_ID,
+    };
+
     return fetch(ingestionUrl, {
       method: 'POST',
-      body: JSON.stringify(
-        F.pipe(
-          logs,
-          A.map((log) =>
-            F.pipe(
-              log.record,
-              parseMessageWithPowertoolsLogFormat,
-              E.fold(
-                () => ({
-                  dt: log.time,
-                  message: log.record,
-                }),
-                ({ message, ...data }) => ({
-                  dt: log.time,
-                  message,
-                  data,
-                }),
-              ),
+      body: F.pipe(
+        logs,
+        A.map((log) =>
+          F.pipe(
+            log.record,
+            parseMessageWithPowertoolsLogFormat,
+            E.fold(
+              () => ({
+                ...metadata,
+                message: log.record,
+              }),
+              ({ message, ...data }) => ({
+                ...metadata,
+                message,
+                ...data,
+              }),
             ),
           ),
-        ).join('\n'),
-      ),
+        ),
+      )
+        .map((e) => JSON.stringify(e))
+        .join('\n'),
       headers: {
         'Content-Type': 'application/x-ndjson',
         'x-bd-authorization': token,

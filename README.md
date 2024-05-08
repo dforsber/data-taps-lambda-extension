@@ -32,7 +32,9 @@ $ aws lambda publish-layer-version \
       --compatible-architectures x86_64 arm64
 ```
 
-Once deployed set the `BD_TAP_CLIENT_TOKEN` environment variable on your Lambda to your [Data Tap client token](https://github.com/boilingdata/boilingdata-bdcli), and [add the layer](https://docs.aws.amazon.com/lambda/latest/dg/invocation-layers.html) to your Lambda function. On next invocation your Lambda logs should start flowing to your configured Data Tap. There is buffering on both in the Lambda Extension and in the Data Tap.
+Once deployed set the `BD_TAP_CLIENT_TOKEN` environment variable on your Lambda to your [Data Tap client token](https://github.com/boilingdata/boilingdata-bdcli), and [add the layer](https://docs.aws.amazon.com/lambda/latest/dg/invocation-layers.html) to your Lambda function. Set the `BD_DATA_TAP_URL` as your Data Tap URL. On next invocation your Lambda logs should start flowing to your configured Data Tap. There is buffering on both in the Lambda Extension and in the Data Tap.
+
+> NOTE: You can have multiple Data Taps. It's better to use multiple Data Taps if you have differing schemas.
 
 ## Environment Variables
 

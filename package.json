@@ -11,7 +11,8 @@
     "lint": "eslint --ext .ts .",
     "lint:fix": "eslint --ext .ts --fix .",
     "type-check": "tsc --noEmit",
-    "validate": "yarn run lint && yarn run test"
+    "validate": "yarn run lint && yarn run test",
+    "deploy:euw1": "aws lambda publish-layer-version --layer-name data-taps-lambda-extension --region eu-west-1 --zip-file \"fileb:///Users/dforsber/Desktop/Projektit/GitHub/data-taps-lambda-extension/dist/extension.zip\""
   },
   "keywords": [],
   "author": "Dan Forsberg <dforsber@gmail.com>",

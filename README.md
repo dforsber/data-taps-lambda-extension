@@ -1,6 +1,6 @@
 [FluentBit](https://github.com/boilingdata/data-taps-fluentbit-example) | [Web Analytics](https://github.com/boilingdata/data-taps-webanalytics-example) | [PostgreSQL CDC](https://github.com/boilingdata/data-taps-postgres-cdc) | [REST API](https://github.com/boilingdata/data-taps-nycopendata-example) | [OpenSearch/ES](https://github.com/boilingdata/data-taps-opensearch-to-s3) | [AWS Lambda Telemetry](https://github.com/dforsber/data-taps-lambda-extension)
 
-# BoilingData AWS Lambda Telemetry API
+# AWS Lambda Logs (Telemetry API) --> Data Tap --> S3
 
 <p align="center">
   <img src="img/data-taps-lambda-extension.png" title="simple architecture">

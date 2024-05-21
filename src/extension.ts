@@ -42,7 +42,7 @@ export const createExtension = (
               protocol: 'HTTP',
               URI: `http://${RECEIVER_ADDRESS}:${RECEIVER_PORT}`,
             },
-            types: ['function', 'platform', 'extension'],
+            types: ['function', 'platform'],
             buffering: {
               timeoutMs: TIMEOUT_MS,
               maxBytes: MAX_BYTES,

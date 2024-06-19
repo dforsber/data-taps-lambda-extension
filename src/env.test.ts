@@ -17,6 +17,7 @@ describe('test parseEnvironment`', () => {
         AWS_LAMBDA_RUNTIME_API: 'http://127.0.0.1:9001/',
         AWS_LAMBDA_RUNTIME_EXTENSION_API_VERSION: '2020-01-01',
         AWS_LAMBDA_RUNTIME_TELEMETRY_API_VERSION: '2022-07-01',
+        AWS_LAMBDA_RUNTIME_TELEMETRY_SCHEMA_VERSION: '2022-12-13',
         EXTENSION_NAME: 'data-taps-lambda-extension',
         BD_DATA_TAP_URL: 'https://lambda-function-url/',
         BD_TAP_CLIENT_TOKEN: 'test_token',

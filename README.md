@@ -50,4 +50,4 @@ Once deployed set the `BD_TAP_CLIENT_TOKEN` environment variable on your Lambda 
 | TIMEOUT_MS                               | Maximum time (in milliseconds) that a batch is buffered | `1000`                               |
 | AWS_LAMBDA_RUNTIME_API                   | HTTP base URI to the lambda runtime API                 | _Provided by AWS Lambda environment_ |
 | AWS_LAMBDA_RUNTIME_EXTENSION_API_VERSION | Lambda Extension API version date                       | `2020-01-01`                         |
-| AWS_LAMBDA_RUNTIME_TELEMETRY_API_VERSION | Telemetry API version date                              | `2022-07-01`                         |
+| AWS_LAMBDA_RUNTIME_TELEMETRY_API_VERSION | Telemetry API version date                              | `2022-12-13`                         |

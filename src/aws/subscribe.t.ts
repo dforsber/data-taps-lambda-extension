@@ -19,8 +19,8 @@ describe('test AWS Extension Telemetry', () => {
       { status: 200 },
     );
 
-    const result = await subscribeTelemetry('http://127.0.0.1:9001/2020-01-01', extensionId, <SubscriptionBody>{
-      schemaVersion: '2020-01-01',
+    const result = await subscribeTelemetry('http://127.0.0.1:9001/2022-12-13', extensionId, <SubscriptionBody>{
+      schemaVersion: '2022-12-13',
       destination: {
         protocol: 'HTTP',
         URI: `http://test:1234`,
@@ -44,8 +44,8 @@ describe('test AWS Extension Telemetry', () => {
       { status: 202 },
     );
 
-    const result = await subscribeTelemetry('http://127.0.0.1:9001/2020-01-01', extensionId, <SubscriptionBody>{
-      schemaVersion: '2020-01-01',
+    const result = await subscribeTelemetry('http://127.0.0.1:9001/2022-12-13', extensionId, <SubscriptionBody>{
+      schemaVersion: '2022-12-13',
       destination: {
         protocol: 'HTTP',
         URI: `http://test:1234`,

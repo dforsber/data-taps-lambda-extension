@@ -11,6 +11,7 @@ const envSchema = z.object({
   AWS_LAMBDA_RUNTIME_API: z.string(), // Provided by the Lambda Env, usually http://127.0.0.1:9001/
   AWS_LAMBDA_RUNTIME_EXTENSION_API_VERSION: z.string().default('2020-01-01'), // Extension API version
   AWS_LAMBDA_RUNTIME_TELEMETRY_API_VERSION: z.string().default('2022-07-01'), // Telemetry API version
+  AWS_LAMBDA_RUNTIME_TELEMETRY_SCHEMA_VERSION: z.string().default('2022-12-13'), // Telemetry API version
   EXTENSION_NAME: z.string().default('data-taps-lambda-extension'),
   RECEIVER_ADDRESS: z.string().default('sandbox'), // `sandbox` seems to be the default accepted address
   MAX_ITEMS: envNumber.default('10000'), // Maximum number of events that are buffered in memory.

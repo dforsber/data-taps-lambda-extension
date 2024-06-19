@@ -30,19 +30,19 @@ export const createExtension = (
         extensionId,
         RECEIVER_ADDRESS,
         RECEIVER_PORT,
-        AWS_LAMBDA_RUNTIME_TELEMETRY_API_VERSION,
+        AWS_LAMBDA_RUNTIME_TELEMETRY_SCHEMA_VERSION,
         TIMEOUT_MS,
         MAX_BYTES,
         MAX_ITEMS,
       }) =>
         F.pipe(
           <SubscriptionBody>{
-            schemaVersion: AWS_LAMBDA_RUNTIME_TELEMETRY_API_VERSION,
+            schemaVersion: AWS_LAMBDA_RUNTIME_TELEMETRY_SCHEMA_VERSION,
             destination: {
               protocol: 'HTTP',
               URI: `http://${RECEIVER_ADDRESS}:${RECEIVER_PORT}`,
             },
-            types: ['function', 'platform'],
+            types: ['platform', 'function', 'extension'],
             buffering: {
               timeoutMs: TIMEOUT_MS,
               maxBytes: MAX_BYTES,

@@ -55,7 +55,10 @@ export const createExtension = (
     TE.bind('forwardLogs', ({ BD_TAP_CLIENT_TOKEN, BD_DATA_TAP_URL, listener }) =>
       TE.of(dataTapsLogForwarder(BD_TAP_CLIENT_TOKEN, BD_DATA_TAP_URL, listener)),
     ),
-    TE.map(({ EXTENSION_NAME, extensionId, extensionBaseUrl, forwardLogs, listener }) =>
+    TE.bind('forwardLogsForceFlush', ({ BD_TAP_CLIENT_TOKEN, BD_DATA_TAP_URL, listener }) =>
+      TE.of(dataTapsLogForwarder(BD_TAP_CLIENT_TOKEN, BD_DATA_TAP_URL, listener, true)),
+    ),
+    TE.map(({ EXTENSION_NAME, extensionId, extensionBaseUrl, forwardLogs, forwardLogsForceFlush, listener }) =>
       F.pipe(
         pollForNextEvent(extensionId, extensionBaseUrl, abortHandler.signal), //
         TE.chainW((event) =>
@@ -80,7 +83,7 @@ export const createExtension = (
                   abortHandler.abort();
 
                   // Forward any pending logs
-                  return forwardLogs();
+                  return forwardLogsForceFlush();
               }
             },
             () => new Error(),

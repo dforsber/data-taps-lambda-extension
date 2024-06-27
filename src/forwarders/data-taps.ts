@@ -1,49 +1,94 @@
 import fetch from 'node-fetch';
 import { FunctionLogEvent } from '~/aws/events';
+import retry from 'async-retry';
 
-const AWS_LAMBDA_FUNCTION_NAME = process.env['AWS_LAMBDA_FUNCTION_NAME'] ?? 'NA';
+// See https://awsteele.com/blog/2022/12/15/lambda-extension-environment-variables.html
 // const AWS_LAMBDA_FUNCTION_MEMORY_SIZE = process.env['AWS_LAMBDA_FUNCTION_MEMORY_SIZE'] ?? '0';
+const AWS_LAMBDA_FUNCTION_VERSION = process.env['AWS_LAMBDA_FUNCTION_VERSION'] ?? 'NA';
 const AWS_REGION = process.env['AWS_REGION'] ?? process.env['AWS_DEFAULT_REGION'] ?? 'NA';
-const _X_AMZN_TRACE_ID = process.env['_X_AMZN_TRACE_ID'] ?? 'NA';
-// const AWS_LAMBDA_FUNCTION_VERSION = process.env['AWS_LAMBDA_FUNCTION_VERSION'] ?? 'NA';
-const AWS_LAMBDA_LOG_GROUP_NAME = process.env['AWS_LAMBDA_LOG_GROUP_NAME'] ?? AWS_LAMBDA_FUNCTION_NAME;
-const AWS_LAMBDA_LOG_STREAM_NAME = process.env['AWS_LAMBDA_LOG_STREAM_NAME'] ?? new Date().toISOString();
+const AWS_LAMBDA_FUNCTION_NAME = process.env['AWS_LAMBDA_FUNCTION_NAME'] ?? 'NA';
+// NOTE: No AWS_LAMBDA_LOG_GROUP_NAME or AWS_LAMBDA_LOG_STREAM_NAME for extension..
+const AWS_LAMBDA_LOG_GROUP_NAME = AWS_LAMBDA_FUNCTION_NAME;
+const AWS_LAMBDA_LOG_STREAM_NAME = `${new Date().toISOString()}_${(Math.random() * 1000).toFixed(0)}`;
+
+// NOTE: Fetch these from disk, if function has stored them?
+// const AWS_ACCOUNT = process.env['AWS_ACCOUNT'] ?? 'NA';
+// const _X_AMZN_TRACE_ID = process.env['_X_AMZN_TRACE_ID'] ?? 'NA';
+
+const staticFields = {
+  version: AWS_LAMBDA_FUNCTION_VERSION,
+  region: AWS_REGION,
+  // account: AWS_ACCOUNT,
+  logGroup: AWS_LAMBDA_LOG_GROUP_NAME,
+  logStream: AWS_LAMBDA_LOG_STREAM_NAME,
+  // x_trace_id: _X_AMZN_TRACE_ID,
+};
 
 export const dataTapsLogForwarder =
-  (token: string, ingestionUrl: string, listener: { logsQueue: FunctionLogEvent[] }) => (): Promise<void> => {
+  (token: string, ingestionUrl: string, listener: { logsQueue: FunctionLogEvent[] }, forceFlush = false) =>
+  (): Promise<void> => {
     const logs = listener.logsQueue.splice(0);
+    if (forceFlush) {
+      logs.push({
+        time: new Date(),
+        type: 'extension', // https://docs.aws.amazon.com/lambda/latest/dg/telemetry-api.html#telemetry-api-messages
+        ...staticFields,
+        record: { message: `Force flushed ${logs.length + 1} messages (shutdown).` },
+      });
+    }
     if (logs.length === 0) return Promise.resolve();
 
-    return fetch(ingestionUrl, {
-      method: 'POST',
-      body: logs
-        .map((log) => ({
-          time: log.time,
-          type: log.type,
-          // lambda: `${AWS_LAMBDA_FUNCTION_NAME}:${AWS_LAMBDA_FUNCTION_VERSION}`,
-          region: AWS_REGION,
-          logGroup: AWS_LAMBDA_LOG_GROUP_NAME,
-          logStream: AWS_LAMBDA_LOG_STREAM_NAME,
-          x_trace_id: _X_AMZN_TRACE_ID,
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-          record: log.record,
-        }))
-        .map((e) => JSON.stringify(e))
-        .join('\n'),
-      headers: {
-        'Content-Type': 'application/x-ndjson',
-        'x-bd-authorization': token,
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    return retry(
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      async (_) => {
+        const res = await fetch(ingestionUrl, {
+          signal: AbortSignal.timeout(5000),
+          method: 'POST',
+          body: logs
+            .map((log) => ({
+              time: log.time,
+              type: log.type,
+              ...staticFields,
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+              record: log.record,
+            }))
+            .map((e) => JSON.stringify(e))
+            .join('\n'),
+          headers: {
+            'Content-Type': 'application/x-ndjson',
+            'x-bd-authorization': token,
+          },
+        }).then(async (response) => {
+          if (!response.ok) throw new Error(await response.text());
+        });
+        return res;
       },
-    })
-      .then(async (response) => {
-        if (!response.ok) throw new Error(await response.text());
-      })
-      .catch((error) => {
-        console.error(
-          `Error during log forwarding, pushing logs ${logs.length} back onto queue: ${
-            error instanceof Error ? error.message : error
-          }`,
-        );
-        listener.logsQueue.unshift(...logs);
-      });
+      {
+        retries: forceFlush ? 12 : 2,
+        randomize: false,
+        factor: 2, // 20, 40, 80, 150, 150, 150, 150, 150, 150, 150, 150, 150 ~= 1490 ms
+        minTimeout: 20,
+        maxTimeout: 150,
+        // We don't use console.error() as we want to push this message now.. if retries don't work
+        // This message gets pushed back to logs as well (unless shutdown).
+        onRetry: (error, attempt) =>
+          logs.push({
+            time: new Date(),
+            type: 'extension',
+            record: { message: `Async retry (${attempt}) error: ${error instanceof Error ? error.message : error}` },
+          }),
+      },
+    ).catch((error) => {
+      // NOTE: In case this is forceFlush() call (extension shutdown), then we have lost log messages :(
+      //       This can happen if e.g. Data Tap is deleted (i.e. the URL does not respond)
+
+      // We are done pushing logs for now, so console.error() is fine
+      console.error(
+        `Error during log forwarding, pushing logs ${logs.length} back onto queue: ${
+          error instanceof Error ? error.message : error
+        }`,
+      );
+      listener.logsQueue.unshift(...logs);
+    });
   };

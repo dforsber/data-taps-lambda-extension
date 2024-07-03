@@ -1,9 +1,8 @@
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import http from 'http';
-import { FunctionLogEvent, functionLogEventSchema } from '~/aws/events';
-import { function as F, taskEither as TE, either as E } from 'fp-ts';
-import { z } from 'zod';
-
-export const arrayLogsSchema = z.array(functionLogEventSchema);
+import { FunctionLogEvent } from '~/aws/events';
+// import { dataTapsLogForwarder } from './forwarders/data-taps';
 
 export interface TelemetryHttpListener {
   logsQueue: FunctionLogEvent[];
@@ -12,54 +11,68 @@ export interface TelemetryHttpListener {
 
 // HTTP server for the logs subscription
 // AWS Lambda Telemetry API will POST the logs to this server
-export const startTelemetryHttpListener = (
+export async function startTelemetryHttpListener(
   EXTENSION_NAME: string,
   address: string,
   port: number,
-): TE.TaskEither<Error, { logsQueue: FunctionLogEvent[]; server: http.Server }> =>
-  TE.tryCatch(
-    () =>
-      new Promise((resolve, reject) => {
-        const logsQueue: FunctionLogEvent[] = [];
-
-        const server = http.createServer((request, response) => {
-          switch (request.method) {
-            // Received some logs, let's parse them and push them onto the queue
-            case 'POST': {
-              let body = '';
-              request.on('data', (data) => (body += data));
-              request.on('end', () => {
-                F.pipe(
-                  JSON.parse(body),
-                  (data) => arrayLogsSchema.safeParse(data),
-                  (parsed) => (parsed.success ? E.right(logsQueue.push(...parsed.data)) : E.left(parsed.error)),
-                  E.fold(
-                    (error) => {
-                      response.writeHead(400);
-                      console.error(`[${EXTENSION_NAME}] Error parsing logs: ${error}`);
-                    },
-                    (count) => {
-                      response.writeHead(200);
-                      console.log(`[${EXTENSION_NAME}] Pushed ${count} logs onto queue, now ${logsQueue.length}`);
-                    },
-                  ),
-                  () => {
-                    response.end();
-                  },
-                );
+): Promise<{ logsQueue: FunctionLogEvent[]; server: http.Server }> {
+  try {
+    const logsQueue: FunctionLogEvent[] = [];
+    const server = http.createServer((request, response) => {
+      switch (request.method) {
+        case 'POST': {
+          let body = '';
+          request.on('data', (data) => (body += data));
+          request.on('end', () => {
+            let parsedLogs = [];
+            try {
+              parsedLogs = JSON.parse(body);
+              if (Array.isArray(parsedLogs) && parsedLogs.length > 0) logsQueue.push(...parsedLogs);
+            } catch (error) {
+              const message = `[${EXTENSION_NAME}] Error processing/parsing request: ${error}`;
+              logsQueue.push({ time: new Date(), type: 'extension', record: { level: 'ERROR', message } });
+            }
+            response.writeHead(200);
+            response.end();
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+            /*
+            dataTapsLogForwarder(
+              process.env['BD_TAP_CLIENT_TOKEN'] ?? 'NA',
+              process.env['BD_DATA_TAP_URL'] ?? 'NA',
+              logsQueue,
+              false,
+            )
+              .then(() => {
+                response.writeHead(200);
+              })
+              .catch((error) => {
+                response.writeHead(400);
+                const message = `[${EXTENSION_NAME}] Error processing request: ${error}`;
+                logsQueue.push({ time: new Date(), type: 'extension', record: { level: 'ERROR', message } });
+              })
+              .finally(() => {
+                response.end();
               });
-              break;
-            }
-            case 'GET': {
-              response.writeHead(200);
-              response.end();
-              break;
-            }
-          }
-        });
+              */
+          });
+          break;
+        }
+        case 'GET':
+          response.writeHead(200);
+          response.end();
+          break;
+      }
+    });
 
-        server.on('error', reject);
-        server.listen(port, address, undefined, () => resolve({ logsQueue, server }));
-      }),
-    (error) => new Error(`Failed to start http logging listener: ${error instanceof Error ? error.message : error}`),
-  );
+    server.on('error', (error) => {
+      throw new Error(`Failed to start http logging listener: ${error.message}`);
+    });
+
+    await new Promise((resolve) => server.listen(port, address, undefined, () => resolve(0)));
+
+    return { logsQueue, server };
+  } catch (error: any) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    throw new Error(`Failed to start http logging listener: ${error?.message}`);
+  }
+}

@@ -24,71 +24,97 @@ const staticFields = {
   // x_trace_id: _X_AMZN_TRACE_ID,
 };
 
-export const dataTapsLogForwarder =
-  (token: string, ingestionUrl: string, listener: { logsQueue: FunctionLogEvent[] }, forceFlush = false) =>
-  (): Promise<void> => {
-    const logs = listener.logsQueue.splice(0);
-    if (forceFlush) {
-      logs.push({
-        time: new Date(),
-        type: 'extension', // https://docs.aws.amazon.com/lambda/latest/dg/telemetry-api.html#telemetry-api-messages
-        ...staticFields,
-        record: { message: `Force flushed ${logs.length + 1} messages (shutdown).` },
-      });
-    }
-    if (logs.length === 0) return Promise.resolve();
-
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return retry(
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      async (_) => {
-        const res = await fetch(ingestionUrl, {
-          signal: AbortSignal.timeout(5000),
-          method: 'POST',
-          body: logs
-            .map((log) => ({
-              time: log.time,
-              type: log.type,
-              ...staticFields,
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-              record: log.record,
-            }))
-            .map((e) => JSON.stringify(e))
-            .join('\n'),
-          headers: {
-            'Content-Type': 'application/x-ndjson',
-            'x-bd-authorization': token,
-          },
-        }).then(async (response) => {
-          if (!response.ok) throw new Error(await response.text());
-        });
-        return res;
-      },
-      {
-        retries: forceFlush ? 12 : 2,
-        randomize: false,
-        factor: 2, // 20, 40, 80, 150, 150, 150, 150, 150, 150, 150, 150, 150 ~= 1490 ms
-        minTimeout: 20,
-        maxTimeout: 150,
-        // We don't use console.error() as we want to push this message now.. if retries don't work
-        // This message gets pushed back to logs as well (unless shutdown).
-        onRetry: (error, attempt) =>
+export async function dataTapsLogForwarder(
+  token: string,
+  ingestionUrl: string,
+  logsQueue: FunctionLogEvent[],
+  forceFlush = false,
+): Promise<void> {
+  const logs = logsQueue.splice(0);
+  if (logs.length === 0) return Promise.resolve();
+  logs.push({
+    time: new Date(),
+    type: 'extension', // https://docs.aws.amazon.com/lambda/latest/dg/telemetry-api.html#telemetry-api-messages
+    record: {
+      level: 'INFO',
+      message: `Sending ${logs.length + 1} messages to Data Tap` + (forceFlush ? ' (SHUTDOWN)' : ''),
+    },
+  });
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+  let retryAttempt = 0;
+  return retry(
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    async (_) => {
+      const res = await fetch(ingestionUrl, {
+        signal: AbortSignal.timeout(1000),
+        method: 'POST',
+        body: logs
+          .map((log) => ({
+            time: log.time,
+            type: log.type,
+            ...staticFields,
+            // record: typeof log.record == 'object' ? JSON.stringify(log.record) : log.record,
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            record: log.record,
+            retryAttempt,
+          }))
+          .map((e) => JSON.stringify(e))
+          .join('\n'),
+        headers: {
+          'Content-Type': 'application/x-ndjson',
+          'x-bd-authorization': token,
+        },
+      }).then(async (response) => {
+        if (!response.ok) {
+          const t = await response.text();
           logs.push({
             time: new Date(),
             type: 'extension',
-            record: { message: `Async retry (${attempt}) error: ${error instanceof Error ? error.message : error}` },
-          }),
+            record: {
+              level: 'ERROR',
+              message: `Data Tap error (${retryAttempt}): ${t}`,
+            },
+          });
+          throw new Error(t);
+        }
+      });
+      return res;
+    },
+    {
+      retries: forceFlush ? 12 : 2,
+      randomize: false,
+      factor: 2, // 20, 40, 80, 150, 150, 150, 150, 150, 150, 150, 150, 150 ~= 1490 ms
+      minTimeout: 20,
+      maxTimeout: 150,
+      // We don't use console.error() as we want to push this message now.. if retries don't work
+      // This message gets pushed back to logs as well (unless shutdown).
+      onRetry: (error, attempt) => {
+        retryAttempt = attempt;
+        logs.push({
+          time: new Date(),
+          type: 'extension',
+          record: {
+            level: 'ERROR',
+            message: `Async retry (${attempt}) error (${error instanceof Error ? error.name : 'NA'}): ${
+              error instanceof Error ? error.message : error
+            }`,
+          },
+        });
       },
-    ).catch((error) => {
-      // NOTE: In case this is forceFlush() call (extension shutdown), then we have lost log messages :(
-      //       This can happen if e.g. Data Tap is deleted (i.e. the URL does not respond)
-
-      // We are done pushing logs for now, so console.error() is fine
-      console.error(
-        `Error during log forwarding, pushing logs ${logs.length} back onto queue: ${
-          error instanceof Error ? error.message : error
-        }`,
-      );
-      listener.logsQueue.unshift(...logs);
+    },
+  ).catch((error) => {
+    // NOTE: In case this is forceFlush() call (extension shutdown), then we have lost log messages :(
+    //       This can happen if e.g. Data Tap is deleted (i.e. the URL does not respond)
+    logs.push({
+      time: new Date(),
+      type: 'extension', // https://docs.aws.amazon.com/lambda/latest/dg/telemetry-api.html#telemetry-api-messages
+      record: {
+        level: 'ERROR',
+        message: `Error during log forwarding, pushing logs ${logs.length} back onto queue (${
+          error instanceof Error ? error.name : ''
+        }): ${error instanceof Error ? error.message : error}`,
+      },
     });
-  };
+    logsQueue.unshift(...logs);
+  });
+}

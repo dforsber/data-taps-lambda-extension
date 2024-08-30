@@ -9,7 +9,8 @@ const AWS_REGION = process.env['AWS_REGION'] ?? process.env['AWS_DEFAULT_REGION'
 const AWS_LAMBDA_FUNCTION_NAME = process.env['AWS_LAMBDA_FUNCTION_NAME'] ?? 'NA';
 // NOTE: No AWS_LAMBDA_LOG_GROUP_NAME or AWS_LAMBDA_LOG_STREAM_NAME for extension..
 const AWS_LAMBDA_LOG_GROUP_NAME = AWS_LAMBDA_FUNCTION_NAME;
-const AWS_LAMBDA_LOG_STREAM_NAME = `${new Date().toISOString()}_${(Math.random() * 1000).toFixed(0)}`;
+const randStr = String((Math.random() * 1000).toFixed(0)).padStart(3, '0');
+const AWS_LAMBDA_LOG_STREAM_NAME = `${new Date().toISOString()}_${randStr}`;
 
 // NOTE: Fetch these from disk, if function has stored them?
 // const AWS_ACCOUNT = process.env['AWS_ACCOUNT'] ?? 'NA';
@@ -81,11 +82,11 @@ export async function dataTapsLogForwarder(
       return res;
     },
     {
-      retries: forceFlush ? 12 : 2,
+      retries: forceFlush ? 10 : 5,
       randomize: false,
-      factor: 2, // 20, 40, 80, 150, 150, 150, 150, 150, 150, 150, 150, 150 ~= 1490 ms
-      minTimeout: 20,
-      maxTimeout: 150,
+      factor: 2, // 100, 200, 400, 400, 400
+      minTimeout: 100,
+      maxTimeout: 400,
       // We don't use console.error() as we want to push this message now.. if retries don't work
       // This message gets pushed back to logs as well (unless shutdown).
       onRetry: (error, attempt) => {
